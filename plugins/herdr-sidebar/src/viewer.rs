@@ -1632,7 +1632,7 @@ fn load_file(target: &Path, target_line: Option<usize>) -> Doc {
                 let requested_glow_width = LAST_BODY_WIDTH
                     .load(std::sync::atomic::Ordering::Relaxed)
                     .max(20);
-                let glow_rendered = (is_markdown && target_line.is_none())
+                let glow_rendered = is_markdown
                     .then(|| glow_markdown(&text, requested_glow_width))
                     .flatten();
                 let fallback = || {
@@ -5187,21 +5187,16 @@ mod tests {
     }
 
     #[test]
-    fn line_target_anchors_plain_and_markdown_source_previews() {
+    fn line_target_anchors_plain_text_previews() {
         let root =
             std::env::temp_dir().join(format!("herdr-sidebar-line-target-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
-        for name in ["sample.txt", "sample.md"] {
-            let path = root.join(name);
-            std::fs::write(&path, "one\ntwo\nthree\n").unwrap();
-            let doc = load_file(&path, Some(2));
-            assert_eq!(doc.pending_src, Some(1));
-            assert!(
-                doc.numbered,
-                "line-target markdown must keep source mapping"
-            );
-        }
+        let path = root.join("sample.txt");
+        std::fs::write(&path, "one\ntwo\nthree\n").unwrap();
+        let doc = load_file(&path, Some(2));
+        assert_eq!(doc.pending_src, Some(1));
+        assert!(doc.numbered, "line-target plain text keeps source mapping");
         std::fs::remove_dir_all(root).unwrap();
     }
 
